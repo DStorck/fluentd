@@ -14,6 +14,7 @@ output:
   port: 9200
   buffer_chunk_limit: 2M
   buffer_queue_limit: 8
+  scheme: http
 
 env: {}
 
@@ -97,6 +98,40 @@ configMaps:
   output.conf: |
     
     # might be <match *.**>
+    <match host.**>
+      @type copy
+      <store>
+        @type elasticsearch
+        @log_level info
+        host localhost
+        port 9200
+        include_tag_key true
+        tag_key @log_name
+        logstash_format true
+        logstash_prefix logsystemd
+        flush_interval 10s
+        max_retry_wait 30
+        disable_retry_limit
+        host "#{ENV['FLUENT_ELASTICSEARCH_HOST']}"
+        port "#{ENV['FLUENT_ELASTICSEARCH_PORT']}"
+        user "#{ENV['FLUENT_ELASTICSEARCH_USER']}"
+        password "#{ENV['FLUENT_ELASTICSEARCH_PASSWORD']}"
+      </store>
+      <store>
+        @type s3
+        aws_key_id "#{ENV['AWS_KEY_ID']}"
+        aws_sec_key "#{ENV['AWS_SECRET_KEY']}"
+        s3_bucket "#{ENV['S3_BUCKET']}"
+        s3_region "#{ENV['S3_REGION']}"
+        path logs/
+        buffer_path /var/log/fluent/s3
+        time_slice_format %Y%m%d%H
+        time_slice_wait 1m
+        utc
+        buffer_chunk_limit 256m
+      </store>
+    </match>
+    
     <match **>
       @type copy
       <store>
@@ -124,7 +159,7 @@ configMaps:
         path logs/
         buffer_path /var/log/fluent/s3
         time_slice_format %Y%m%d%H
-        time_slice_wait 10m
+        time_slice_wait 4m
         utc
         buffer_chunk_limit 256m
       </store>
