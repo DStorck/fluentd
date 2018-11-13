@@ -29,18 +29,10 @@ spec:
         - name: {{ $pullSecret }}
       {{- end }}
 {{- end }}
-      # initContainers: 
-      # - name: plugin-install
-      #   image: gcr.io/google-containers/fluentd-elasticsearch:v2.3.1
-      #   imagePullPolicy: IfNotPresent
-      #   command:  ["fluent-gem", "install", "fluent-plugin-s3"]
-      #   volumeMounts:
-      #   - mountPath: /etc/fluent/plugins
-      #     name: plugindir
       containers:
       - name: {{ .Chart.Name }}
-        # image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        image: quay.io/dstorck/fluentd-s3
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        command: ["/bin/bash", "-c", "fluent-gem install fluent-plugin-s3; /run.sh"]
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
           - name: OUTPUT_BUFFER_CHUNK_LIMIT
@@ -91,7 +83,7 @@ spec:
           mountPath: /etc/fluent/config.d
         - name: buffer
           mountPath: "/var/log/fluentd-buffers"
-      volumes:
+      volumes: 
         - name: config-volume-{{ template "fluentd.fullname" . }}
           configMap:
             name: {{ template "fluentd.fullname" . }}

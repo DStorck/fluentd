@@ -126,7 +126,7 @@ configMaps:
         path logs/
         buffer_path /var/log/fluent/s3
         time_slice_format %Y%m%d%H
-        time_slice_wait 1m
+        time_slice_wait 10m
         utc
         buffer_chunk_limit 256m
       </store>
@@ -159,7 +159,7 @@ configMaps:
         path logs/
         buffer_path /var/log/fluent/s3
         time_slice_format %Y%m%d%H
-        time_slice_wait 4m
+        time_slice_wait 10m
         utc
         buffer_chunk_limit 256m
       </store>
