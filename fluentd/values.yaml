@@ -1,13 +1,7 @@
-# Default values for fluentd.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
 image:
   repository: gcr.io/google-containers/fluentd-elasticsearch
   tag: v2.3.1
   pullPolicy: IfNotPresent
-  # pullSecrets:
-  #   - secret1
-  #   - secret2
 
 output:
   host: elasticsearch
@@ -20,8 +14,10 @@ env: {}
 
 fluentESUser: elastic 
 fluentESPassword: changeme 
+
 awsSecKey: secretKey 
 awsKeyId: keyId
+
 s3Bucket: sampleBucketName
 s3Region: sampleBucketRegion
 
@@ -33,16 +29,7 @@ service:
       protocol: TCP
       containerPort: 24220
 
-ingress:
-  enabled: false
-  # Used to create an Ingress and Service record.
-  # hosts:
-  #   - name: "http-input.local"
-  #     protocol: TCP
-  #     serviceName: http-input
-  #     servicePort: 9880
   annotations:
-    # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   tls:
     # Secrets must be manually created in the namespace.
@@ -79,31 +66,42 @@ configMaps:
     </system>
   forward-input.conf: |
     <source>
-      @type forward
-      port 24220
-      bind 0.0.0.0
-    </source>
-    # <match **>
-    #   type stdout
-    # </match>
-    # <match fluent_bit>
-    #   type stdout
-    # </match>
-    <source>
       @type dummy
       tag dummy 
-      dummy {"hello":"my favorite taco"}
+      dummy {"hello":" taco"}
     </source>
     
-  output.conf: |
+    <source>
+      @type forward
+      port 24220
+      @log_level debug 
+      allow_self_signed_certificate true
+      <transport tls>
+         ca_path                /fluentd/etc/ssl/ca.crt.pem
+         cert_path              /fluentd/etc/ssl/server.crt.pem
+         private_key_path       /fluentd/etc/ssl/server.key.pem
+         private_key_passphrase "fbit"
+         client_cert_auth       true
+      </transport>
+      <security>
+        self_hostname fluentd
+        shared_key fluentd
+      </security>
+    </source>
     
-    # might be <match *.**>
+    <match **>
+      @type stdout
+    </match>
+    <match fluent_bit>
+      @type stdout
+    </match>
+    
+  output.conf: |
     <match host.**>
       @type copy
       <store>
         @type elasticsearch
         @log_level info
-        host localhost
         port 9200
         include_tag_key true
         tag_key @log_name
@@ -126,7 +124,7 @@ configMaps:
         path logs/
         buffer_path /var/log/fluent/s3
         time_slice_format %Y%m%d%H
-        time_slice_wait 10m
+        time_slice_wait 28m
         utc
         buffer_chunk_limit 256m
       </store>
@@ -137,7 +135,6 @@ configMaps:
       <store>
         @type elasticsearch
         @log_level info
-        host localhost
         port 9200
         include_tag_key true
         tag_key @log_name
@@ -152,6 +149,7 @@ configMaps:
       </store>
       <store>
         @type s3
+        @log_level debug
         aws_key_id "#{ENV['AWS_KEY_ID']}"
         aws_sec_key "#{ENV['AWS_SECRET_KEY']}"
         s3_bucket "#{ENV['S3_BUCKET']}"
@@ -159,11 +157,12 @@ configMaps:
         path logs/
         buffer_path /var/log/fluent/s3
         time_slice_format %Y%m%d%H
-        time_slice_wait 10m
+        time_slice_wait 28m
         utc
         buffer_chunk_limit 256m
       </store>
     </match>
+
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little

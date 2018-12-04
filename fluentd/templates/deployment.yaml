@@ -29,10 +29,11 @@ spec:
         - name: {{ $pullSecret }}
       {{- end }}
 {{- end }}
-      containers:
+      containers:    
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        command: ["/bin/bash", "-c", "fluent-gem install fluent-plugin-s3; /run.sh"]
+        # should take these plugins out , put them in values file, run a loop to install them 
+        command: ["/bin/bash", "-c", "fluent-gem install fluent-plugin-s3; fluent-gem install fluent-plugin-secure-forward; /run.sh"]
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
           - name: OUTPUT_BUFFER_CHUNK_LIMIT
@@ -83,7 +84,12 @@ spec:
           mountPath: /etc/fluent/config.d
         - name: buffer
           mountPath: "/var/log/fluentd-buffers"
+        - name: certs
+          mountPath: "/fluentd/etc/ssl"
       volumes: 
+        - name: certs
+          secret: 
+            secretName: fluentd-tls 
         - name: config-volume-{{ template "fluentd.fullname" . }}
           configMap:
             name: {{ template "fluentd.fullname" . }}
