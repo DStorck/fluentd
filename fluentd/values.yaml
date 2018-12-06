@@ -17,7 +17,7 @@ output:
   scheme: http
 
 env: {}
-
+# elasticsearchEnabled: false 
 fluentESUser: elastic 
 fluentESPassword: changeme 
 fluentdPrivateKeyPassphrase: fbit 
@@ -76,8 +76,8 @@ configMaps:
     </source>
     <source>
       @type forward
+      @log_level info 
       port 24220
-      @log_level debug 
       allow_self_signed_certificate true
       <transport tls>
          ca_path                /fluentd/etc/ssl/ca.crt.pem
@@ -119,10 +119,11 @@ configMaps:
         aws_sec_key "#{ENV['AWS_SECRET_KEY']}"
         s3_bucket "#{ENV['S3_BUCKET']}"
         s3_region "#{ENV['S3_REGION']}"
+        auto_create_bucket false 
         path logs/
         buffer_path /var/log/fluent/s3
         time_slice_format %Y%m%d%H
-        time_slice_wait 5m
+        time_slice_wait 2m
         utc
         buffer_chunk_limit 256m
       </store>
@@ -152,10 +153,11 @@ configMaps:
         aws_sec_key "#{ENV['AWS_SECRET_KEY']}"
         s3_bucket "#{ENV['S3_BUCKET']}"
         s3_region "#{ENV['S3_REGION']}"
+        auto_create_bucket false
         path logs/
         buffer_path /var/log/fluent/s3
         time_slice_format %Y%m%d%H
-        time_slice_wait 5m
+        time_slice_wait 2m
         utc
         buffer_chunk_limit 256m
       </store>
